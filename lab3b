@@ -1,0 +1,74 @@
+import time
+import pyshark
+
+# Function to capture packets using pyshark
+def capture_packets(interface, output_file, duration=10):
+    """
+    Captures packets on a specific network interface and saves to output_file using pyshark.
+    
+    Parameters:
+    - interface: Network interface to capture packets from (e.g., Wi-Fi, Ethernet).
+    - output_file: Output file name to save the captured packets (e.g., packets.pcap).
+    - duration: Duration to capture packets in seconds (default 10 seconds).
+    """
+    print(f"Starting packet capture on {interface} for {duration} seconds...")
+    
+    # Capture packets using pyshark (this uses tshark in the background)
+    cap = pyshark.LiveCapture(interface=interface, output_file=output_file)
+    
+    # Start capture with duration limit
+    cap.sniff(timeout=duration)
+    print(f"Packet capture completed. Data saved to {output_file}")
+
+# Function to analyze captured packets using pyshark
+def analyze_packets(file_path):
+    """
+    Analyzes packets from a pcap file using pyshark.
+    
+    Parameters:
+    - file_path: Path to the pcap file to analyze.
+    """
+    print(f"Analyzing packets from {file_path}...")
+    
+    # Read the pcap file with pyshark
+    cap = pyshark.FileCapture(file_path)
+
+    print(f"Total packets captured: {len(cap)}")
+    
+    # Loop through each packet and print basic details
+    for i, packet in enumerate(cap, 1):
+        print(f"Packet {i}:")
+        
+        # Check if 'IP' layer exists
+        if 'IP' in packet:
+            print(f"  Source IP: {packet.ip.src} -> Destination IP: {packet.ip.dst}")
+        
+        # Check if 'TCP' layer exists
+        if 'TCP' in packet:
+            print(f"  TCP: {packet.tcp.srcport} -> {packet.tcp.dstport}")
+        
+        # Check if 'UDP' layer exists
+        elif 'UDP' in packet:
+            print(f"  UDP: {packet.udp.srcport} -> {packet.udp.dstport}")
+        
+        # Optionally, print the packet payload or other information if needed
+        if hasattr(packet, 'highest_layer'):
+            print(f"  Highest Layer: {packet.highest_layer}")
+        
+        # Optionally, print the entire packet
+        # print(packet)  # Uncomment if you want to print the entire packet
+
+# Main function to orchestrate packet monitoring and analysis
+def main():
+    interface = "Wi-Fi"  # Update with the correct interface name for your Wi-Fi (e.g., "Wi-Fi" or "Wi-Fi 2")
+    capture_duration = 10  # Duration to capture packets (in seconds)
+    output_file = "captured_packets.pcap"  # File to save captured packets
+    
+    # Step 1: Capture packets
+    capture_packets(interface, output_file, duration=capture_duration)
+    
+    # Step 2: Analyze captured packets
+    analyze_packets(output_file)
+
+if __name__ == "__main__":
+    main()
